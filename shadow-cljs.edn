@@ -13,6 +13,13 @@
    :devtools {:after-load portal.core/reload!
               :preloads   [shadow.remote.runtime.cljs.browser]}}
 
+  :chrome-extension
+  {:output-dir "target/chrome-extension"
+   :asset-path "."
+   :target :browser
+   :compiler-options {:warnings-as-errors true}
+   :modules {:main {:init-fn portal.chrome-extension/main!}}}
+
   :demo
   {:output-dir "target/demo/"
    :asset-path "."

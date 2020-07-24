@@ -6,10 +6,13 @@ node_modules: package.json
 	npm ci
 
 dev: node_modules
-	clojure -A:cider:cljs:dev-cljs:shadow-cljs watch client node demo
+	clojure -A:cider:cljs:dev-cljs:shadow-cljs watch chrome-extension client node demo
 
 release: node_modules
 	clojure -A:cljs:shadow-cljs release client
+
+chrome-extension: node_modules
+	clojure -A:cljs:shadow-cljs release chrome-extension
 
 lint:
 	clojure -A:kondo --lint dev src
