@@ -9,18 +9,73 @@
    :border-bottom (str "1px solid " (::c/border settings))
    :border-right (str "1px solid " (::c/border settings))})
 
-(defn- table-header-row [settings child]
-  [s/th
-   {:style
-    (assoc
-     (get-styles settings)
-     :top 0
-     :z-index 2
-     :position :sticky
-     :background (ins/get-background settings))}
-   child])
+(defn- table-header-row [settings row]
+  (let [[column direction] (:table/sort-by settings)
+        contains-field? (get settings :table/contains-field? #{})
+        set-settings! (:set-settings! settings)
+        toggle-sort [row (if-not (= column row)
+                           ::asc
+                           (if (= direction ::asc) ::desc ::asc))]]
+    [s/th
+     {:title (str "Click to sort-by " (pr-str toggle-sort))
+      :on-click #(set-settings!  {:table/sort-by toggle-sort})
+      :style
+      (assoc
+       (get-styles settings)
+       :top 0
+       :left (if (#{::keys ::idx} row) 0 :auto)
+       :z-index (if (#{::keys ::idx} row) 3 2)
+       :position :sticky
+       :text-align :left
+       :padding (:spacing/padding settings)
+       :background (ins/get-background settings))}
+     [s/div
+      {:style
+       {:display :flex
+        :justify-content :space-between
+        :align-items :center}}
+      [s/div
+       {:style {:display :flex :align-items :center}}
+       (when-not (#{::keys ::idx} row)
+         [s/input
+          {:type "checkbox"
+           :checked (contains? contains-field? row)
+           :title (str "Check to require " (pr-str row))
+           :on-click #(.stopPropagation %)
+           :on-change (fn [e]
+                        (let [checked? (.-checked (.-target e))]
+                          (set-settings!
+                           {:table/contains-field?
+                            ((if checked? conj disj) contains-field? row)})))}])
+       (pr-str (case row ::keys 'key ::idx 'idx row))]
+      (when (= column row)
+        [s/div
+         {:style {:margin-left (:spacing/padding settings)}}
+         (cond
+           (= direction ::asc) "▼"
+           (= direction ::desc) "▲")])]]))
 
-(defn- table-header-column [settings child]
+(defn- try-sort [settings values]
+  (or
+   (when-let [[column direction] (:table/sort-by settings)]
+     (try
+       (if (= column ::idx)
+         (if (= direction ::asc) values (reverse values))
+         (sort-by (case column ::keys first (comp column second))
+                  (case direction ::asc < ::desc >) values))
+       (catch js/Error _e)))
+   values))
+
+(defn- filter-values [settings values]
+  (let [fields (:table/contains-field? settings)]
+    (if (empty? fields)
+      values
+      (filter
+       (fn [[_ m]]
+         (every? #(contains? m %) fields))
+       values))))
+
+(defn- table-header-column [settings column]
   [s/th
    {:style
     (assoc
@@ -28,9 +83,10 @@
      :left 0
      :z-index 1
      :position :sticky
-     :text-align :right
+     :text-align :left
+     :padding (:spacing/padding settings)
      :background (ins/get-background settings))}
-   child])
+   (pr-str column)])
 
 (defn- table-data [settings child]
   [s/td {:style (get-styles settings)} child])
@@ -69,59 +125,57 @@
         (if transpose? cols rows))]]]))
 
 (defn- inspect-map-table [settings values]
-  (let [columns (into #{} (mapcat keys (vals values)))]
-    [table
-     settings
-     (fn [context]
-       (let [{:keys [row column]} context]
-         (cond
-           (= column row ::header) [table-header-row settings]
+  [table
+   settings
+   (fn [context]
+     (let [{:keys [row column]} context]
+       (cond
+         (= column row ::header) [table-header-row settings ::keys]
 
-           (= row ::header)
-           [table-header-row
-            settings
-            [inspector (assoc settings :coll values) column]]
+         (= row ::header)
+         [table-header-row settings column]
 
-           (= column ::header)
-           [table-header-column
-            settings
-            [inspector (assoc settings :coll values) (first row)]]
+         (= column ::header)
+         [table-header-column settings (first row)]
 
-           :else
-           [table-data
-            settings
-            (let [[_ row] row]
-              (when (contains? row column)
-                [inspector (assoc settings :coll row :k column) (get row column)]))])))
-     (concat [::header] values)
-     (concat [::header] columns)]))
+         :else
+         [table-data
+          settings
+          (let [[_ row] row]
+            (when (contains? row column)
+              [inspector (assoc settings :coll row :k column) (get row column)]))])))
+   (concat [::header]
+           (->> values
+                (filter-values settings)
+                (try-sort settings)))
+   (concat [::header] (into #{} (mapcat keys (vals values))))])
 
 (defn- inspect-coll-table [settings values]
-  (let [columns (into #{} (mapcat keys values))]
-    [table
-     settings
-     (fn [context]
-       (let [{:keys [row column]} context]
-         (cond
-           (= column row ::header) [table-header-row settings]
+  [table
+   settings
+   (fn [context]
+     (let [{:keys [row column]} context]
+       (cond
+         (= column row ::header) [table-header-row settings ::idx]
 
-           (= row ::header)
-           [table-header-row
-            settings
-            [inspector (assoc settings :coll values) column]]
+         (= row ::header)
+         [table-header-row settings column]
 
-           (= column ::header)
-           [table-header-column
-            settings
-            [inspector (assoc settings :coll values) (dec (:row-index context))]]
+         (= column ::header)
+         [table-header-column settings (first row)]
 
-           :else
-           [table-data
-            settings
+         :else
+         [table-data
+          settings
+          (let [[_ row] row]
             (when (contains? row column)
-              [inspector (assoc settings :coll row :k column) (get row column)])])))
-     (concat [::header] values)
-     (concat [::header] columns)]))
+              [inspector (assoc settings :coll row :k column) (get row column)]))])))
+   (concat [::header]
+           (->> values
+                (map vector (range))
+                (filter-values settings)
+                (try-sort settings)))
+   (concat [::header] (into #{} (mapcat keys values)))])
 
 (defn- inspect-vector-table [settings values]
   (let [n (reduce max (map count values))]
