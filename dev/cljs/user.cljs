@@ -6,6 +6,10 @@
 
 (p/tap)
 
+(defn swap-dev []
+  (set! js/portal.runtime.launcher.web.code_url
+        (str js/window.location.origin "/main.js")))
+
 (extend-protocol Datafiable
   js/Promise
   (datafy [this] (.then this identity))
@@ -17,7 +21,7 @@
      :stack    (.-stack this)}))
 
 (comment
-  (set! js/portal.web.code_url (str js/window.location.origin "/main.js"))
+  (swap-dev)
 
   (def portal (p/open))
   (p/tap)

@@ -81,7 +81,16 @@
       ; wait for any newly returned promise to resolve
       (a/let [naved naved] (on-datafy naved done)))))
 
+(defn invoke [request done]
+  (let [f    (:portal/fn request)
+        args (:portal/args request)]
+    (done {:portal/value
+           (try (apply f args)
+                (catch #?(:clj Exception :cljs js/Error) e
+                  (datafy e)))})))
+
 (def ops
   {:portal.rpc/clear-values clear-values
    :portal.rpc/load-state   load-state
+   :portal.rpc/invoke       invoke
    :portal.rpc/on-nav       on-nav})

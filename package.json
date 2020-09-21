@@ -2,7 +2,9 @@
   "dependencies": {
     "react": "16.13.0",
     "react-dom": "16.13.0",
-    "react-visibility-sensor": "^5.1.1"
+    "react-visibility-sensor": "^5.1.1",
+    "xterm": "^4.9.0",
+    "xterm-addon-fit": "^0.4.0"
   },
   "devDependencies": {
     "source-map-support": "^0.5.19",

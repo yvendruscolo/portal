@@ -4,4 +4,5 @@
                :cljs [portal.runtime.client.node :as c])))
 
 (def ops c/ops)
+(def sessions c/sessions)
 (def make-atom c/make-atom)

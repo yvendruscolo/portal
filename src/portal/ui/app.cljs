@@ -5,6 +5,7 @@
             [portal.ui.drag-and-drop :as dnd]
             [portal.ui.inspector :as ins :refer [inspector]]
             [portal.ui.styled :as s]
+            [portal.ui.viewer.terminal :refer [process? terminal]]
             [portal.ui.viewer.diff :as d]
             [portal.ui.viewer.exception :as ex]
             [portal.ui.viewer.hiccup :refer [inspect-hiccup]]
@@ -14,6 +15,7 @@
             [portal.ui.viewer.table :refer [inspect-table table-view?]]
             [portal.ui.viewer.text :refer [inspect-text]]
             [portal.ui.viewer.tree :refer [inspect-tree-1]]
+            [portal.ui.viewer.prompt :refer [prompt prompt?]]
             [reagent.core :as r]))
 
 (defn filter-data [settings value]
@@ -124,7 +126,9 @@
         [inspector (assoc settings :coll value :depth 0) m]])]))
 
 (def viewers
-  [{:name :portal.viewer/ex       :predicate ex/exception? :component ex/inspect-exception}
+  [{:name :portal.viewer/terminal :predicate process?      :component terminal}
+   {:name :portal.viewer/prompt   :predicate prompt?       :component prompt}
+   {:name :portal.viewer/ex       :predicate ex/exception? :component ex/inspect-exception}
    {:name :portal.viewer/image    :predicate ins/bin?      :component image/inspect-image}
    {:name :portal.viewer/map      :predicate map?          :component ins/inspect-map}
    {:name :portal.viewer/coll     :predicate coll?         :component ins/inspect-coll :datafy seq}
@@ -184,8 +188,9 @@
         [s/div
          {:style
           {:box-sizing :border-box
+           :flex "1"
            :padding (* 2 (:spacing/padding settings))}}
-         [inspector (assoc settings :component component) value]]]]]
+         [component settings value]]]]]
      [s/div
       {:style
        {:display :flex

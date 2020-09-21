@@ -1,0 +1,3 @@
+#!/bin/bash
+
+lein repl :connect "$(cat .shadow-cljs/nrepl.port)"

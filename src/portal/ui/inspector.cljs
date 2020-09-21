@@ -78,7 +78,7 @@
         [diff-added settings added]])]))
 
 (defn get-background [settings]
-  (if (even? (:depth settings))
+  (if (odd? (:depth settings))
     (::c/background settings)
     (::c/background2 settings)))
 
@@ -339,7 +339,7 @@
                           (get-preview-component type)
                           (get-inspect-component type))))
         settings (-> settings (update :depth inc) (dissoc :component))
-        nav-target? (= 2 (:depth settings))
+        nav-target? (= 1 (:depth settings))
         on-nav #((:portal/on-nav settings) (assoc settings :value value))]
     [s/div
      {:on-click

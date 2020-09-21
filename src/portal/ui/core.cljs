@@ -61,6 +61,29 @@
       (.then merge-state)
       (.then #(:portal/complete? %))))
 
+(defn on-invoke [send! f & args]
+  (swap! state assoc :portal/invoking? true)
+  (-> (send!
+       {:op          :portal.rpc/invoke
+        :portal/fn   f
+        :portal/args args})
+      (.then
+       (fn [result]
+         (swap! state assoc :portal/invoking? false)
+         (:portal/value result)))))
+
+(defn push-state [value]
+  (swap! state
+         (fn [state]
+           (assoc state
+                  :portal/previous-state state
+                  :portal/next-state nil
+                  :search-text ""
+                  :portal/value value))))
+
+(defn replace-state [value]
+  (swap! state assoc :portal/value value))
+
 (def default-settings
   {:font/family "monospace"
    :font-size "12pt"
@@ -76,17 +99,21 @@
    :portal/on-nav   (partial on-nav send!)
    :portal/on-back  (partial on-back send!)
    :portal/on-forward (partial on-forward send!)
-   :portal/on-load  (partial load-state send!)})
+   :portal/on-load  (partial load-state send!)
+   :portal/on-push push-state
+   :portal/on-replace replace-state
+   :portal/on-invoke (partial on-invoke send!)})
 
 (defn long-poll []
   (let [on-load (or (:portal/on-load @state)
                     #(js/Promise.resolve false))]
+    (on-load)
     (.then (on-load)
            (fn [complete?]
              (when-not complete? (long-poll))))))
 
 (defn main!
-  ([] (main! (get-actions rpc/send!)))
+  ([] (main! (get-actions rpc/request)))
   ([settings]
    (swap! state merge default-settings settings)
    (long-poll)
