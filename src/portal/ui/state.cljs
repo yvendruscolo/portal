@@ -4,6 +4,7 @@
 
 (defonce state     (r/atom nil))
 (defonce tap-state (r/atom nil))
+(defonce render-state (r/atom nil))
 
 (defn back [state]
   (when-let [previous-state (:portal/previous-state state)]

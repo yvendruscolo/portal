@@ -72,3 +72,8 @@
   (print-method (into {} portal) w))
 
 (defn make-atom [session-id] (Portal. session-id))
+
+(defn render [portal value]
+  (:portal/value
+   (request (:session-id portal)
+            {:op :portal.rpc/render :portal/value value})))

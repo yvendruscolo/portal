@@ -1,12 +1,10 @@
 (ns portal.ui.core
   (:require [portal.ui.state :as st :refer [state]]
             [portal.ui.rpc :as rpc]
-            [portal.ui.app :refer [app]]
+            [portal.ui.app :as a]
+            [portal.colors :as c]
+            [portal.ui.render :as render]
             [reagent.dom :as rdom]))
-
-(defn render-app []
-  (rdom/render [app]
-               (.getElementById js/document "root")))
 
 (def default-settings
   {:font/family "monospace"
@@ -15,6 +13,18 @@
    :limits/max-depth 1
    :spacing/padding 8
    :border-radius "2px"})
+
+(defn root []
+  (let [settings (merge (get c/themes ::c/nord)
+                        (st/get-actions rpc/request)
+                        default-settings)]
+    [render/render-tree
+     settings
+     @st/render-state]))
+
+(defn render-app []
+  (rdom/render [a/app]
+               (.getElementById js/document "root")))
 
 (defn long-poll []
   (let [on-load (or (:portal/on-load @state)

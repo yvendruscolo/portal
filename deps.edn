@@ -1,4 +1,7 @@
 {:paths ["src" "resources"]
+ :mvn/repos
+ {"bintray-jetbrains-pty4j"
+  {:url "https://jetbrains.bintray.com/pty4j"}}
  :deps
  {com.cognitect/transit-clj {:mvn/version "1.0.324"
                              :exclusions [org.msgpack/msgpack
@@ -8,7 +11,11 @@
                      :exclusions [tigris/tigris]}
   http-kit/http-kit {:mvn/version "2.5.0"}}
  :aliases
- {:dev {:extra-paths ["dev" "test"]}
+ {:dev
+  {:extra-paths ["dev" "test"]
+   :extra-deps
+   {org.jetbrains.pty4j/pty4j {:mvn/version "0.8.6"}
+    com.bhauman/rebel-readline {:mvn/version "0.1.4"}}}
   :dev-cljs
   ;; Using clojurescript from source is required to get around
   ;; the older version (0.8.309) of transit-clj bundled in their jar.

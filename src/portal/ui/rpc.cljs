@@ -78,6 +78,11 @@
      (js/setTimeout #(js/window.close) 100)
      (send! {:op :portal.rpc/response
              :portal.rpc/id (:portal.rpc/id message)}))
+   :portal.rpc/render
+   (fn [message send!]
+     (reset! portal.ui.state/render-state (:portal/value message))
+     (send! {:op :portal.rpc/response
+             :portal.rpc/id (:portal.rpc/id message)}))
    :portal.rpc/push-state
    (fn [message send!]
      (swap! state

@@ -3,7 +3,10 @@
     "csv-parse": "^4.14.0",
     "react": "16.13.0",
     "react-dom": "16.13.0",
-    "react-visibility-sensor": "^5.1.1"
+    "react-visibility-sensor": "^5.1.1",
+    "xterm": "^4.9.0",
+    "xterm-addon-fit": "^0.4.0",
+    "xterm-addon-web-links": "^0.4.0"
   },
   "devDependencies": {
     "browserify": "^16.5.2",

@@ -53,6 +53,9 @@ dev: resources/js
 dev/node: resources/js
 	clojure -M:dev:cider:cljs:dev-cljs:shadow-cljs watch node client
 
+dev/xterm: resources/portal/main.js
+	clojure -M:dev -m portal.terminal
+
 check/clj-check:
 	clojure -M:nrepl:check
 

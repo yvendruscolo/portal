@@ -1,7 +1,9 @@
 (ns portal.api
   (:require [portal.runtime :as rt]
             #?(:clj  [portal.runtime.jvm.launcher :as l]
-               :cljs [portal.runtime.node.launcher :as l])))
+               :cljs [portal.runtime.node.launcher :as l])
+            #?(:clj  [portal.runtime.jvm.client :as c]
+               :cljs [portal.runtime.node.client :as c])))
 
 (defn tap
   "Add portal as a tap> target."
@@ -31,5 +33,11 @@
   "Clear all values."
   []
   (rt/clear-values)
+  nil)
+
+(defn render
+  [portal value]
+  (reset! rt/instance-cache {})
+  (c/render portal value)
   nil)
 
