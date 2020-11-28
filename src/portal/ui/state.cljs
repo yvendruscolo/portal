@@ -68,17 +68,11 @@
   (swap! tap-state assoc ::c/theme theme))
 
 (defn merge-state [new-state]
-  (let [merged-state (swap! tap-state merge new-state)]
-    (when (false? (:portal/open? merged-state))
-      (js/window.close))
-    merged-state))
+  (swap! tap-state merge new-state))
 
 (defn load-state [send!]
-  (-> (send!
-       {:op              :portal.rpc/load-state
-        :portal/state-id (:portal/state-id @tap-state)})
-      (.then merge-state)
-      (.then #(:portal/complete? %))))
+  (-> (send! {:op :portal.rpc/load-state})
+      (.then merge-state)))
 
 (defn invoke [send! f & args]
   (-> (send!
@@ -107,4 +101,5 @@
    :portal/on-back  on-back
    :portal/on-forward on-forward
    :portal/on-load  (partial load-state send!)
-   :portal/on-more  (partial more send!)})
+   :portal/on-more  (partial more send!)
+   :portal/on-invoke (partial invoke send!)})

@@ -233,22 +233,66 @@
         :justify-content :space-between
         :background (::c/background2 settings)
         :border-top (str "1px solid " (::c/border settings))}}
-      (if (empty? compatible-viewers)
-        [s/div]
-        [:select
-         {:value (pr-str (:name viewer))
-          :on-change #(set-viewer!
-                       (keyword (.substr (.. % -target -value) 1)))
-          :style
-          {:background (::c/background settings)
+      #_[s/div
+         {:style
+          {:display :flex
+           :align-items :center
+           :position :relative
+           :width "100%"
            :margin (:spacing/padding settings)
-           :padding (:spacing/padding settings)
-           :box-sizing :border
-           :font-size (:font-size settings)
-           :color (::c/text settings)
+           :margin-right 0
            :border (str "1px solid " (::c/border settings))}}
-         (for [{:keys [name]} compatible-viewers]
-           [:option {:key name :value (pr-str name)} (pr-str name)])])
+         #_[s/div
+            {:style
+             {;:color (::c/text settings)
+              :padding (:spacing/padding settings)
+              :box-sizing :border-box
+          ;:border-radius (:border-radius settings)
+          ;:background (::c/background settings)
+          ;:border-right (str "1px solid " (::c/border settings))
+              }}
+            "=>"]
+         [s/div
+          {:style
+           {:color (::c/text settings)
+            :padding (:spacing/padding settings)
+            :box-sizing :border-box
+            :border-radius (:border-radius settings)
+            :background (::c/background settings)
+            :border-right (str "1px solid " (::c/border settings))}}
+          "=>"]
+         [s/input
+          {:value "deref"
+           :style
+           {:width "100%"
+            :background (::c/background settings)
+            :font-family (:font/family settings)
+            :padding (:spacing/padding settings)
+            :box-sizing :border
+            :font-size (:font-size settings)
+            :color (::c/text settings)
+            :border :none
+          ;:border-bottom (str "2px solid " (::c/border settings))
+            }}]]
+      [s/div
+       (when-not (empty? compatible-viewers)
+         [:select
+          {:value (pr-str (:name viewer))
+           :on-change #(set-viewer!
+                        (keyword (.substr (.. % -target -value) 1)))
+           :style
+           {:background (::c/background settings)
+            :margin (:spacing/padding settings)
+            :padding (:spacing/padding settings)
+            :box-sizing :border-box
+            :font-size (:font-size settings)
+            :font-family (:font/family settings)
+            :color (::c/text settings)
+            :border (str "1px solid " (::c/border settings))
+            :border-radius (:border-radius settings)}}
+          (for [{:keys [name]} compatible-viewers]
+            [:option {:key name :value (pr-str name)} (pr-str name)])])]
+
       [s/div
        {:style {:padding (:spacing/padding settings)}}
        [ins/preview settings value]]]]))
@@ -333,10 +377,16 @@
                    :padding-right (* 2 (:spacing/padding settings))})}
       "clear"])])
 
+(defn- get-value [x]
+  (when x
+    (:portal/value (:deref (deref x)))))
+
 (defn app []
   (let [set-settings! (fn [value] (swap! state merge value))
         theme (get c/themes (get @tap-state ::c/theme ::c/nord))
-        settings (merge theme @tap-state (assoc @state :depth 0 :set-settings! set-settings!))]
+        settings (merge theme
+                        (update @tap-state :portal/value get-value)
+                        (assoc @state :depth 0 :set-settings! set-settings!))]
     [dnd/area
      settings
      [s/div

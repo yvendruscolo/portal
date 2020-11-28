@@ -3,6 +3,7 @@
             [lambdaisland.deep-diff2.diff-impl :as diff]
             [portal.colors :as c]
             [portal.ui.lazy :as l]
+            [portal.ui.object :as obj]
             [portal.ui.styled :as s]))
 
 (defn date? [value] (instance? js/Date value))
@@ -34,6 +35,8 @@
     (url? value)      :uri
     (t/uri? value)    :uri
     (date? value)     :date
+
+    (obj/portal-object? value)    :object
 
     (t/tagged-value? value)
     (case (.-tag value)
@@ -110,7 +113,7 @@
 (def preview-set    (preview-coll "#{" "}"))
 
 (defn preview-object [settings value]
-  [s/span {:style {:color (::c/text settings)}} (:type (.-rep value))])
+  [s/span {:style {:color (::c/text settings)}} (:type @value)])
 
 (defn preview-tagged [settings value]
   [tagged-tag settings (.-tag value)])
@@ -291,7 +294,7 @@
    (trim-string settings (pr-str value))])
 
 (defn inspect-object [settings value]
-  (let [value (.-rep value)]
+  (let [value @value]
     [s/span {:title (:type value)
              :style
              {:color (::c/text settings)}}
@@ -319,7 +322,7 @@
     inspect-default))
 
 (def preview-type?
-  #{:map :set :vector :list :coll :tagged})
+  #{:map :set :vector :list :coll :tagged :object})
 
 (defn preview [settings value]
   (let [type (get-value-type value)

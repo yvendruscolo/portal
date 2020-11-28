@@ -15,8 +15,7 @@
      (assoc value :portal.rpc/exception nil))
     (catch js/Error e
       (t/edn->json
-       {:portal/state-id (:portal/state-id value)
-        :portal.rpc/exception e}))))
+       {:portal.rpc/exception e}))))
 
 (defn require-string [src file-name]
   (let [Module (js/require "module")

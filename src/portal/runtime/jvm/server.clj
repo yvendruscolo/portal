@@ -44,9 +44,18 @@
         (swap! c/sessions
                assoc session-id
                (fn send! [message]
-                 (server/send! ch (edn->json message)))))
+                 (server/send! ch (edn->json message))))
+        (add-watch
+         rt/value-cache
+         ::watch
+         (fn [_ _ _old new]
+           (c/request
+            session-id
+            {:op :portal.rpc/sync-cache :value new}))))
       :on-close
-      (fn [_ch _status] (swap! c/sessions dissoc session-id))})))
+      (fn [_ch _status]
+        (remove-watch rt/value-cache ::watch)
+        (swap! c/sessions dissoc session-id))})))
 
 (def ^:private resource
   {"main.js" (io/resource "portal/main.js")})
