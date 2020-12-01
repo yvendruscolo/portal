@@ -4,6 +4,7 @@
 
 (defonce state     (r/atom nil))
 (defonce tap-state (r/atom nil))
+(defonce commands  (r/atom '()))
 
 (defn back [state]
   (when-let [previous-state (:portal/previous-state state)]
@@ -28,6 +29,11 @@
            (->> (iterate forward state) (take-while some?) last))))
 
 (defn push [{:portal/keys [key value f]}]
+  (when-not (number? key)
+    (let [entry {:name key :run f}]
+      (swap! commands
+             (fn [commands]
+               (conj (remove #{entry} commands) entry)))))
   (swap! state
          (fn [state]
            (assoc state
