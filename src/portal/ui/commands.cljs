@@ -109,6 +109,38 @@
         :reagent-render
         (fn [] [:div {:ref #(reset! el %) :style {:height "100%"}}])}))))
 
+(defn inspect-code [settings value]
+  (let [settings (assoc settings :spacing/padding 0)]
+    (cond
+      (list? value)
+      [s/div
+       {:style
+        {:display :flex
+         :align-items :center}}
+       "("
+       (for [v value]
+         ^{:key (hash v)} [inspect-code settings v])
+       ")"]
+
+      (vector? value)
+      [s/div
+       {:style
+        {:display :flex
+         :align-items :center}}
+       "["
+       (for [v value]
+         ^{:key (hash v)} [inspect-code settings v])
+       "]"]
+
+      :else [inspector settings value])))
+
+(defn inspect-code-1 [settings value]
+  [s/div
+   {:style
+    {:overflow :hidden
+     :padding (:spacing/padding settings)}}
+   [inspect-code settings value]])
+
 (defn selector-component []
   (let [selected (r/atom #{})
         active   (r/atom 0)]
@@ -274,8 +306,8 @@
                           :background (::c/background settings)}))
                       :style/hover
                       {:background (::c/background settings)}}
-                     (when active? [scroll-into-view])
                      [inspector settings (:name command)]
+                     (when active? [scroll-into-view])
                      [shortcut settings command]])))
                doall)]]))))
 
