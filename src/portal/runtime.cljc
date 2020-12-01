@@ -4,9 +4,22 @@
 
 #?(:clj (defn random-uuid [] (UUID/randomUUID)))
 
+(defonce value-cache (atom #{}))
 (defonce instance-cache (atom {}))
 
+(defn atom? [value]
+  (= (type value) (type (atom nil))))
+
 (declare object->value)
+
+(defn watch-atoms [object]
+  (when (atom? object)
+    (add-watch
+     object
+     ::watch
+     (fn [_ _ _old _new]
+       (swap! value-cache conj object))))
+  object)
 
 (defn instance->uuid [instance]
   (let [k [:instance instance]]
@@ -57,6 +70,9 @@
 (defn clear-values
   ([] (clear-values nil identity))
   ([_request done]
+   (doseq [[_ instance] @instance-cache]
+     (when (atom? instance)
+       (remove-watch instance ::watch)))
    (reset! instance-cache {})
    (swap! state assoc
           :portal/state-id (random-uuid)

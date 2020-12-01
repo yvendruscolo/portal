@@ -52,6 +52,8 @@
   (p/close)
 
   (-> @portal)
+  (def a @portal)
+  (reset! a [:h1 "hello"])
   (tap> portal)
   (swap! portal * 1000)
   (reset! portal 1)

@@ -1,5 +1,7 @@
 (ns portal.ui.state
-  (:require [portal.colors :as c]
+  (:require [cognitect.transit :as t]
+            [portal.async :as a]
+            [portal.colors :as c]
             [reagent.core :as r]))
 
 (defonce state     (r/atom nil))
@@ -104,6 +106,38 @@
                     (with-meta
                       (concat current more)
                       (meta more)))))))))
+
+(defn- patch-next-state [state]
+  (if-let [next-state (:portal/next-state state)]
+    (a/let [f (:portal/f next-state)
+            v (:portal/value state)
+            new-value (f v)
+            next-state (patch-next-state (assoc next-state :portal/value new-value))]
+      (assoc state :portal/next-state next-state))
+    state))
+
+(defn- patch-state [state patches]
+  (if (nil? state)
+    state
+    (let [value (:portal/value state)]
+      (if-not (t/tagged-value? value)
+        (a/let [previous-state (patch-state (:portal/previous-state state) patches)]
+          (if (= (:portal/previous-state state) previous-state)
+            state
+            (a/let [f (:portal/f state)
+                    v (:portal/value previous-state)
+                    new-value (f v)]
+              (patch-next-state
+               (assoc state
+                      :portal/value new-value
+                      :portal/previous-state previous-state)))))
+        (let [id (:id (.-rep value))
+              patch (some #(when (= id (:id (.-rep %))) %) patches)]
+          (patch-next-state (assoc state :portal/value patch)))))))
+
+(defn apply-patches [patches]
+  (a/let [patched (patch-state @state patches)]
+    (reset! state patched)))
 
 (defn get-actions [send!]
   {:portal/on-clear (partial on-clear send!)

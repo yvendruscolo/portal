@@ -183,6 +183,8 @@
           (let [[_ info] @error]
             [:pre [:code (pr-str info)]])))})))
 
+(defonce live (r/atom true))
+
 (defn inspect-1 [settings value]
   (let [value (filter-data settings value)
         {:keys [compatible-viewers viewer set-viewer!]} (use-viewer settings value)
@@ -233,25 +235,115 @@
         :justify-content :space-between
         :background (::c/background2 settings)
         :border-top (str "1px solid " (::c/border settings))}}
-      (if (empty? compatible-viewers)
-        [s/div]
-        [:select
-         {:value (pr-str (:name viewer))
-          :on-change #(set-viewer!
-                       (keyword (.substr (.. % -target -value) 1)))
-          :style
-          {:background (::c/background settings)
+      #_[s/div
+         {:style
+          {:display :flex
+           :align-items :center
+           :position :relative
+           :width "100%"
            :margin (:spacing/padding settings)
-           :padding (:spacing/padding settings)
-           :box-sizing :border
-           :font-size (:font-size settings)
-           :color (::c/text settings)
+           :margin-right 0
            :border (str "1px solid " (::c/border settings))}}
-         (for [{:keys [name]} compatible-viewers]
-           [:option {:key name :value (pr-str name)} (pr-str name)])])
+         #_[s/div
+            {:style
+             {;:color (::c/text settings)
+              :padding (:spacing/padding settings)
+              :box-sizing :border-box
+          ;:border-radius (:border-radius settings)
+          ;:background (::c/background settings)
+          ;:border-right (str "1px solid " (::c/border settings))
+              }}
+            "=>"]
+         [s/div
+          {:style
+           {:color (::c/text settings)
+            :padding (:spacing/padding settings)
+            :box-sizing :border-box
+            :border-radius (:border-radius settings)
+            :background (::c/background settings)
+            :border-right (str "1px solid " (::c/border settings))}}
+          "=>"]
+         [s/input
+          {:value "deref"
+           :style
+           {:width "100%"
+            :background (::c/background settings)
+            :font-family (:font/family settings)
+            :padding (:spacing/padding settings)
+            :box-sizing :border
+            :font-size (:font-size settings)
+            :color (::c/text settings)
+            :border :none
+          ;:border-bottom (str "2px solid " (::c/border settings))
+            }}]]
+      [s/div
+       {:style {:min-width "33.33%"}}
+       (when-not (empty? compatible-viewers)
+         [:select
+          {:value (pr-str (:name viewer))
+           :on-change #(set-viewer!
+                        (keyword (.substr (.. % -target -value) 1)))
+           :style
+           {:background (::c/background settings)
+            :margin (:spacing/padding settings)
+            :padding (:spacing/padding settings)
+            :box-sizing :border-box
+            :font-size (:font-size settings)
+            :font-family (:font/family settings)
+            :color (::c/text settings)
+            :border (str "1px solid " (::c/border settings))
+            :border-radius (:border-radius settings)}}
+          (for [{:keys [name]} compatible-viewers]
+            [:option {:key name :value (pr-str name)} (pr-str name)])])]
       [s/div
        {:style {:padding (:spacing/padding settings)}}
-       [ins/preview settings value]]]]))
+       [ins/preview settings value]]
+      [s/div
+       {:style
+        {:min-width "33.33%"
+         :text-align :right}}
+       (if @live
+         [s/button
+          {:on-click #(reset! live false)
+           :title "Press to pause updates to portal."
+           :style
+           {:cursor :pointer
+            :min-width "130px"
+            :background (::c/background settings)
+            :margin (:spacing/padding settings)
+            :padding (:spacing/padding settings)
+            :box-sizing :border-box
+            :font-size (:font-size settings)
+            :font-family (:font/family settings)
+            :color (::c/border settings)
+           ;:border (str "1px solid " (::c/diff-remove settings))
+            :border (str "1px solid " (::c/border settings))
+            :border-radius (:border-radius settings)}}
+          [:span
+           {:style {:color (::c/diff-remove settings)}}
+           ":"]
+          "portal.sync/"
+          [:b
+           {:style {:color (::c/diff-remove settings)}}
+           "live"]]
+         [s/button
+          {:on-click #(reset! live true)
+           :title "Press to resume updates to portal."
+           :style
+           {:cursor :pointer
+            :min-width "130px"
+            :background (::c/background settings)
+            :margin (:spacing/padding settings)
+            :padding (:spacing/padding settings)
+            :box-sizing :border-box
+            :font-size (:font-size settings)
+            :font-family (:font/family settings)
+            :color (::c/border settings)
+            :border (str "1px solid " (::c/border settings))
+            :border-radius (:border-radius settings)}}
+          [:span {:style {:color (::c/text settings)}} ":"]
+          "portal.sync/"
+          [:b {:style {:color (::c/text settings)}} "idle"]])]]]))
 
 (defn search-input [settings]
   [s/input
